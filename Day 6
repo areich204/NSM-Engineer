@@ -1,0 +1,138 @@
+Day 6 Elasticseach and
+
+1. Log go from biggest to smallest field
+  -field -->  source.ip
+  -doc --> conn.login
+  -shard --> shards are part of an index, primary way to break apart logs
+  several indexes. Indices are apart of nodes, nodes are a part of a cluster
+  -Index -->
+  -Node --> server
+  -Cluster --> rock or SO (can have multiple clusters on the same network, not ideal)
+
+  Cluster --> collection of nodes
+
+  Node        1                2                   3
+            Primary         full replica
+
+
+If node 1 gets knocked off, 2 becomes the primary, 3 becomes the Replica, replicates
+on the indices level. You can have multiple replicas of the full copy.
+
+Node types:
+
+Master node-master node(master node always needs to be an odd number
+) master eligible node (willing to be the master node) and voting only node (willing to say
+someone is in charge). master nodes can swap when one dies. Always have a setup with at least 3 master nodes
+
+Data node(s)- all your create operations (create, write, update, delete), also where most of your searching occurs
+4 nodes, hot, warm, cold, frozen. Hot is the best hardware (SSDs). Aka fastest to slowest nodes, they are attributes That
+are apart of the node. If you pull data from frozen it pulls the specific index back to cold.
+
+Machine Learning Node-
+
+Coordinating Node-Run along the master node. Does most of what the master nodes
+do except the voting. the coordinating node Requests like search requests or bulk-
+indexing requests may involve data held on different data nodes.
+A search request, for example, is executed in two phases which are coordinated
+by the node which receives the client request — the coordinating node.
+In the scatter phase, the coordinating node forwards the request to the data nodes
+which hold the data. Each data node executes the request locally and returns its results to the coordinating node.
+In the gather phase, the coordinating node reduces each data node’s results into a single global result set.
+Every node is implicitly a coordinating node. This means that a node that has an explicit empty list of roles
+via node.roles will only act as a coordinating node, which cannot be disabled. As a result, such a node needs
+to have enough memory and CPU in order to deal with the gather phase.
+https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html
+
+Ingest Node- what EL is trying to replace logstash with
+
+
+########################################### Installing Elastic Search ###################################################
+-SSH into server
+-sudo yum install elsticsearch
+-y
+- sudo cd etc/elasticsearch/
+-sudo vi elasticsearch.yaml
+- insert
+- change cluster.name: sg-8 uncomment
+-node name: sensor-1 (needs to be unique for every node) uncomment
+    (when you enable security node name, host name for the system, and certificate name all need to
+    have the same name)
+-node.attr.rack: no change uncomment
+    (above is manual place to set hot, warm, cold, just an attribute to the node, independent of the node type (master, data etc)
+-path.data /data/elasticsearch uncomment
+-path.logs: /var/log/elasticsearch no change uncomment
+    (^ the runtime stuff)
+-bootstrap.memory_lock: true uncomment
+    (^ leave commented out or run for troubleshooting issues)
+-network.host: 172.16.80.100 uncomment
+-esc :wq
+
+Go into JVM Options Configuration
+
+-sudo vi jvm.options
+    Keep in mind where configs start, the first comment is similar to the configs
+-Xms4g
+-Xmx4g
+-esc :wq
+
+-firewall-cmd --add-port={9200,9300}/tcp --permanent
+-firewall-cmd --reload
+-sudo cd /data/
+-sudo chown -R elasticsearch: elasticsearch/
+-ll
+-sudo systemctl start elasticsearch
+
+-cd /usr/lib
+-cd usr/lib/systemd/system/
+-mkdir elasticsearch.service.d
+-cd elastic.service.d
+ ll
+ sudo vi override.config
+ -[Service]
+ limitMEMLOCK=infinity
+
+ :wq
+ ll
+ cd ..
+ sudo chmod 755 elasticsearch/service.d
+ sudo chmod 644 elasticsearch.service.d/override.conf
+ sudo systemctl daemon-reload
+
+ sudo cd /etc/elasticsearch/
+ sudo vi elasticsearch.yaml
+ discover.seed_hosts: ["172.16.80.100"]
+sudo systemctl start elasticsearch
+ss -lnt
+(^shows you port bindings, socket statistics)
+    curl localhost: 172.16.80.100 --not necessary cmd just shows you info like version of elastic search you use
+    curl localhost: 172.16.80.100:9200/_cat/health
+    curl localhost: 172.16.80.100:9200/_cat/ gives you lots of helpful info for your cluster
+    curl localhost: 172.16.80.100:9200/_cat/nodes?v --> shows different nodes
+    curl localhost: 172.16.80.100:9200/_cat/indices --> shows logstash stuff and primary replica stuff
+
+############################################### Installing Kibana ###################################################
+
+sudo yum install kibana
+y
+/etc/kibana/kibana.yml
+server.host: "172.16.80.100" (line 7)
+elasticsearch.hosts ["http://172.16.80.100:9200"] (line 28)
+:wq
+
+sudo firewall-cmd --add-port=5601/tcp --permanent
+firewall-cmd --reload
+cd /var/
+  (Kibna does not create an error log output directory)
+  (for kibana errors look in var/log messages or journalctl)
+sudo systemctl start Kibana
+type into browser: 172.16.80.100:5601
+
+exit
+(make sure you're in the student )
+curl -L -O http://192.168.2.20:8080/ecskibana.tar.gz
+tar -zxvf ecskibana.tar.gz
+cd ecskibana
+ls
+clear
+sudo ./import-index-templates.sh 172.16.80.100:9200
+curl 172.16.80.100:9200/_cat/templates (index templates, not the data of the indices)

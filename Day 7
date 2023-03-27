@@ -1,0 +1,32 @@
+Logstash notes
+Zeek raw and suricata raw
+Takes file input and pipes it through to other services.
+Think of Logstash as a coin sorting machine
+Logstash sorts data based on conditional statements
+@metadata field is used for sorting, so pay attention to this when
+logstash is sorting data.
+
+Logstash commands
+
+ssh onto your device
+go to 192.168.2.61 (Index online site)
+curl -L -O http://192.168.2.200:8080/logstash.tar
+sudo tar -xvf logstash.tar
+cd conf.d
+sudo vi logstash-100-input-kafka-zeek.conf-no changes to this file
+sudo vi logstash-500-filter-zeek-common.conf
+sudo vi logstash-9999-output-elasticsearch.conf
+change all the host ip(s) to 172.16.80.100 there are 6 in the file
+sudo yum install logstash
+sudo cp -r ../conf.d/ /etc/logstash/
+cd ..
+cd /etc/logstash
+ls
+sudo vi logstash.yaml (no changes to file)
+ll (to see file permissions)
+sudo systemctl start logstash
+sudo systemctl status logstash -l
+curl 172.16.80.100:9200/_cat/indices?v
+go to elasticsearch dashboard, under kibana and set index patterns
+ecs-suricata
+ecs-*   --> this grabs both zeek and suricata

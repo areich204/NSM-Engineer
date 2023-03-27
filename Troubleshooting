@@ -1,0 +1,139 @@
+###################################    General Troubleshooting   ##########################################3
+
+figure out if we have data flowing?
+do ss -lnt make sure things are bound to the right thing
+df -f human readable --> looks at the hard drive
+  1. look to see if a partition is full
+  2. if data/stengaographer is above 90% see if your hard drives are fast enough
+  or if you have enough space
+
+everything configured and talking --
+  1. see network traffic run sudo tcpdump (talks to the network card directly)
+
+journalctl
+journal ctl -xeu stenographer (or suricata or kibana)
+
+sudo firewall-cmd --list-all
+
+make sure you restart all your services PRIOR to troubleshooting once they're broken
+
+No permissions should be root, kafka to kafka, elasticsearch to elasticsearch zeek to zeek etc
+
+
+
+###################################   Suricata Troubleshooting #######################################33
+
+1. check status:  systemctl status suricata -->check that it's user suricata and that it binds to af packet
+    a.pid --af-packet=enp5s0 --user suricata
+
+    systemctl status suricata -l
+2. cd /data/suricata/
+  ll
+3. tail -f eve.json (look to see if TCP and in_iface: enp5s0)
+4. sudo cd /etc/suricata/
+  sudo vi suricata.yaml (double check configs towards and at the btm)
+    default-log-dir: /data/suricata (no extra slash at the end, line 56)
+
+
+################################### Zeek Troubleshooting #######################################
+
+1. check to see if Zeek is running ---> sudo zeekctl status
+2. if you make in changes to ANY files in .zeek run zeekctl deploy
+3. cd /etc/zeek/
+    ll
+  config issues are node.cfg file
+    check the interface for node.cfg
+    check to make sure everything is uncommented for node.cfg
+4,  cd /usr/share/zeek
+    cd /usr/share/zeek/site/
+    ls
+5.  sudo vi local.zeek ---make sure #other scripts is there should be 4 @load lines
+    cd scripts/
+    ls
+    cat kafka.zeek --> make sure localhost listens to 9092
+6. sudo systemctl status zookeeper kafka (make sure your uptime is continuous
+      if kafka isn't getting what it wants it restarts)
+
+scripts to see what kafka is outputting
+sudo /usr/share/kafka/bin/kafka-topics.sh --bootstrap-server 172.16.80.100:9092 --list
+    should be getting zeek raw and suricata raw
+
+################################### Logstash Troubleshooting ########################################
+1. sudo systemctl status logstash (look at the time and make sure it's continuously going)
+  look in conf.d files ---> error may not be in the file logstash says, could be
+  in the one before or after what logstash says
+2. sudo systemctl status elasticsearch
+ll to see what's in there
+
+cd nodes/
+
+cd indices
+
+check status of health of cluster: curl 172.16.80.100:9200/_cat/health?v
+
+################################ Kibana Troubleshooting ###############################################
+sudo systemctl status Kibana
+    Kibana does not create it's own /var/log entry it sends them to messages
+    use /var/log/messages
+
+***if you can't find out what's going on look in /var/log for everything not just Kibana
+
+################################## Stenographer Troubleshooting #######################################
+sudo systemctl status stenographer ---> make sure it's running
+cd /data/stenographer
+cd /packets  ---> look for file with the . infront of it and see that the file grow
+
+
+ss -lnt
+
+type into browser: 172.16.80.100:5601 helps to make sure kibana is working right
+
+looking at stopped services
+
+THIS IS CORRECT
+State      Recv-Q Send-Q Local Address:Port               Peer Address:Port
+LISTEN     0      50           *:36795                    *:*
+LISTEN     0      50           *:35803                    *:*
+LISTEN     0      50     127.0.0.1:9600                     *:*
+LISTEN     0      128    172.16.80.100:5601                     *:*
+LISTEN     0      50           *:9092                     *:*
+LISTEN     0      50           *:2181                     *:*
+LISTEN     0      128    172.16.80.100:9200                     *:*
+LISTEN     0      128    127.0.0.1:1234                     *:*
+LISTEN     0      128    172.16.80.100:9300                     *:*
+LISTEN     0      128          *:22                       *:*
+LISTEN     0      128       [::]:47761                 [::]:*
+LISTEN     0      128       [::]:47762                 [::]:*
+LISTEN     0      128       [::]:47763                 [::]:*
+LISTEN     0      128       [::]:47764                 [::]:*
+LISTEN     0      128       [::]:47765                 [::]:*
+LISTEN     0      128       [::]:22                    [::]:*
+[root@sg8 data]#
+
+@ root systemctl status logstash kafka
+@ root zeekctl statuses
+check firewalls w/ firewall list all cmd
+go into config files for failed services make changes look for more than one error
+***note what the issue what and what you changed***
+restart failed services
+ls -al /data gives looks at permission files
+
+
+
+Kibana active
+  Zookeeper active
+  logstash active
+  zeek active
+  elasticsearch active
+  stenographer active
+  kafka active
+this is not bound: 172.16.80.100:5601
+*:9092 is not showing
+*:2181 is not showing
+
+ran firewall cmd showing all tcp ports
+
+fix 1: stenographer config file: /data/stenographer/packets steno spelled wrong
+fix 2: stenographer config file: line 25 was commented
+fix 2: kibana.yml file uncommented line 2 server.port, line 7 server.host 
+fix 3:elasticsearch.yml netowrk host IP was wrong

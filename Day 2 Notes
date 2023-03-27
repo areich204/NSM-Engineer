@@ -1,0 +1,154 @@
+Data throughput ratio
+10:1 ratio PCAP to ES (this data traverses through the various services below)
+10G PCAP Data > stenographer
+1G metadata > data > ES
+data > Zeek
+data > Suricata
+data > Kafka
+
+Installing CentOS on nook
+press F10 once you plug the USB in, connect keyboard and mouse to your sensor
+1. boot to top UEFI USB part 1
+2. Install CentOS 7 > enter
+3. Select English
+4. Select date and time--choose Etc/Greenwich Main Time > click DONE top left of screen
+4b. software selection verify it's minimal
+5. Select Kdump-disable (uncheck it)
+6. Select Network and hostname
+  6a.eno1 capture sensor
+    -hightlight eno1, bottom left, change Hostname to "sg8.local.lan"
+    -click apply (located to the left)
+    -eno1 configure go to IPV4
+  6B. enps0 management interface connected to sensor
+    Select Method drop down and choose Manual
+    configure (button in btm right)
+    -click IPv4 tab 172.16.80.100, gateway 255.255.255.0, gateway (PfSense 172.16.80.1), addtl DNS server
+    172.16.80.1
+    -Go to IPV6 tab, select Method drop down and select Ignore
+  -Click save bottom
+7. Security Policy
+      -Click into Security Policy and make sure it's OFF
+8. Installation Destination
+    8a.
+      -Select both drives (both should have white check mark)
+      -Choose I will configure partitioning
+        -hit done
+        -choose automatically configure partitioning, check the "i would like to make addtl space available"
+        -hit done, then a box will pop-up, hit delete all, reclaim space
+        - I will configure partitioning
+        -click blue hyperlink "click here to create them automatically"
+        -****don't touch "boot EFI" ***
+        -change /home to 1GB=1024MB
+        -/boot adjust to 1GB=1024MB
+        -adjust swap partition to 1GB
+        -add a partition -hit the + sign in the bottom left
+        -add mount point, /tmp, capacity 1GB
+        -add another partition /var, capacity 1GB
+        -add another partition /var/log, capacity 1 GB
+        -add another partition /var/log/audit 1 GB
+        -add another partition /var/tmp
+        - /data/suricata 1GB
+        - /data/kafka 1GB
+        - /data/zeek 1GB
+        - data/elasticsearch
+      8b.
+        -click on the "/" (small in writing it says "root" below it), to the right, under Volume Group, click create
+        volume group. Rename the top option to vgos (telling the comp you just want to OS to be
+        on that group). That's all you'll do then hit save.
+        -click on /data/zeek partition and create another volume group called "vgdata" this is the
+        faster disc (choose the bottom option).
+        -move all the "/data/zeek, /data/suricata...etc to vgdata partition"
+        -move all the other ones to vgOS partition leave boot alone.
+      8c. Resizing all the partitions
+        -change /tmp to 5GB
+        -"" /var to 50GB
+        - /tmp 5GB
+        - /var 50
+        - /var/log 50
+        - /var/log/audit 50
+        - var/tmp 10
+        - /home 50
+        - /swap 4
+        - / leave blank
+        - data/steganographer 500
+        -/suricata 25
+        - /kafka 100 gb
+        - /zeek 25gb
+        - /elasticsearch leave blank
+        - once done, do you want to make these changes? VERIFY EVERYTHING and accept changes
+
+    9. click begin Installation (blue button, bottom right)
+      -**time sensitive*** >> click Create a user
+      -before you hit begin installation, have a user name and password make them admin
+        user student password training123 don't forget **check the admin box when creating a user acct, hit done.
+      -DO NOT SET ROOT password
+      -let the program finish installation (look at the bottom progress bar. Once complete, pull
+      the USB and reboot)
+    10. login
+    11. ***late change to notes****
+    type ip a to make sure your IP is there for eno1 if not, do step 11
+      -sudo nmtui  to start NetworkManager TUI
+      -go to eno1--it may keep IP and we may need to go in and active eno1
+      -ip4 confiuration hit enter, change to manual,  set addresses 172.16.20.100/24 or /16
+      -gateway 172.16.80.1
+      dns servers same as gateway
+      escape and deactivate then reactivate a connection (eno1)
+    how to get out of VIM esc then :q
+      11. sudo vi /etc/sysconfig/network-scripts/ifcfg-eno1
+        -arrow keys allow you to move around, to edit something in VIM press the insert keys
+        (edit mode) to exit hit esc then hit :w then esc :q or type :wq (cat them together)
+        -onboot keep as YES
+        -bootproto change to NONE
+        -turn all ipv6 to "no"
+        -complete esc :wq
+
+
+        - type "sudo vi /etc/sysctl.conf" hit enter
+        - hit o to get into vim insert mode.
+        - type net.ipv6.conf.all.diable_ipv6 = 1
+        - next line tpye net.ipv6.conf.default.disable_ipv6 = 1
+        - esc :wq
+      ile
+        -sudo vi /etc/hosts
+        -use arrows to move down to second line
+        -type dd to delete the second line (::1 an ipv6 line)
+        -the esc :wq
+        -sudo systemctl restart network
+
+    13. should be able to ssh into the box sudo @student 172.16.80.100
+        -sudo vi /home/student/.ssh/known_hosts
+        -type dd button until get to btm
+        -then :wq
+
+
+        -On Terminal installing local RPM repo in a disconnected environment
+        -***when you use the rm command be careful and type full path
+        - sudo rm /etc/yum.repos.d/*  then enter your password
+        - clear
+        -cd /etc/yum.repos.d
+        - sudo curl -L -O http://192.168.2.20:8080/local.repo
+        -not zero ohh above -O takes name of file and sets as name of file
+
+
+        - type sudo vi local.repo
+        -make sure local.repo matches repo address (make sure IP address matches one listed above)
+        - esc :q
+      14.
+        -sudo yum makecache
+        -sudo yum install vim
+        -do you want to install? YES
+        -sudo yum update -y
+        -sudo systemctl reboot
+      15.
+        **don't need to know for exam***
+        -Scheduling stuff around cron jobs
+        - (make sure you're in your NUC)
+        - sudo systemctl status crond
+        - sudo crontab -e
+
+        -systemd or unit files (most commonly used with services, devices, and system timers)
+        -sudo systemctl list-unit-files -t service (adding service makes it point to a specific service)
+        lists all the services by file and it states if its enabled or disabled
+        -sudo systemctl list-units -t service
+        -sudo systemctl cat ssh (how to look at a specific file 1. if you install something with
+        systemd file it gives you the location. 2. )

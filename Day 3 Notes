@@ -1,0 +1,134 @@
+Linux
+  -Ways to get statuses in Linux
+    -sestatus
+    -getenforce (way to get statues)
+    -sudo vi etc/selinux/config
+    -to quit :q
+-How to look at context in selinux
+  -ls -alZ (capital Z) allows you to look @ file permissions
+  -if you want to change the contect of a file
+    -sudo chcon -t etc_t filename
+    - to see if any changes were made do ls -z
+    -sudo yum install audit2allow ---> allows you to search issues with SE linux context
+      - helps you parse issues a little better and suggest content it needs to fix the problem
+  ***DO NOT DISABLE SE LINUX***
+
+Network Interface Optimizations -for segmentation and checksum offloading (taking the work from the CPU and doing it on the NIC)
+  -ls /etc/yum.repos.d (there shouldn't be any centOS stuff in there, if so run the cmd below)
+  -sudo rm /etc/yum.repos.d/Cen*
+  -sudo yum install ethtool
+  -ssh student@172.16.80.100 (ssh into NUC from cmd prompt)
+  -on cmd line curl the script down (run it as a startup script)-->
+   - type curl -L -O  http://192.168.2.20:8080/interface_prep.sh
+   -add executable flag to the shell script (interface_prep.sh)
+    -type sudo chmod +x interface_prep.sh
+    - sudo ./interface_prep.sh enp5s0
+    -run ip a (verify it's in permiscous mode)
+    -curl -L -O http://192.168.2.20:8080/ifup-local
+    -sudo mv ifup-local /sbin/ifup-local
+    everytime the NIC turns on if [["$1" == "enps0"]]
+    -sudo chmod +x /sbin/ifup-local
+    -sudo chown root: /sbin/ifup-local
+    -ls -al to check permissions and ownership of the file
+    OR
+    -ls -al /sbin/if
+    - cd /etc/sysconfig/network-scripts
+    sudo vi ifcfg-enp5s0
+    hit insert to edit below info:
+    -TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=none **change**
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no **change**
+IPV6_AUTOCONF=no **change**
+IPV6_DEFROUTE=none **change***
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=enp5s0
+UUID=6360b3ab-c9c3-4bba-b316-59758e33fc9f
+DEVICE=enp5s0
+ONBOOT=yes **change***
+NM_CONTROLLED=no ***ADD**
+esc :wq
+
+chnage file to use scripts
+type sudo vi ifup
+SHIFT + G
+
+insert the following text AFTER
+exec ${OTHERSCRIPT} ${CONFIG} $2, use
+
+
+if [ -x /sbin/ifup-local ]; then
+	/sbin/ifup-local ${DEVICE}
+fi
+ esc :wq
+
+sudo systemctl reboot
+after reboot ssh student@172.16.80.100
+ip -a (make sure promiscous mode is up)
+sudo tcpdump -i eno1 (good spot to troubleshoot before installing addtl services)
+^ this can take a minute be patient
+ctrl + c to stop
+(if not there type sudo yum install tcpdump)
+
+install stenographer--
+  -sudo yum install stenographer
+  -sudo vi /etc/stenographer/config
+  (takes you into the config file) (don't forget to insert to modify the configs)
+  -change the packets dir, to "/data/stenographer/packets"
+  -change index dir to "/data/stenographer/index"
+  -max dir files: 30k is safe do not change it.
+  -disk free percentage: 10 (older slower discs set to 15% or 20%-not applicable in this class)
+  -on stenopath: interface (this is our capture interface) change to "enp5s0"
+    -port change to 1234 (don't put it on the same port as something else)
+    -hostname 127.0.0.1 (bind to localhost or the IP of the box for training) don't do anything here
+  -esc :wq
+  -ls -l /etc/stenographer/ (check permissions on file)
+  -sudo chown -R stenographer: /etc/stenographer (change the dir and everything within it)
+
+-Create keys
+  -sudo stenokeys.sh stenographer stenographer
+  -ls -al /etc/stenographer/certs (check and make sure they're there)
+
+Start steganographer
+  -cd /data/stenographer/
+  -sudo makedir packets
+  -sudo makedir index
+  -sudo chown -R stenographer: /data/stenographer/
+  -sudo systemctl start stenographer
+  -sudo systemctl status stenographer (show's it's working)
+  -cd /data/stenographer/packets
+  -ls -al (shows packets are coming through)
+
+
+  ## sw--> pf sense --> nuc (sw to WAN on pfsense plugged into tap --> tap to NUC, NUC back to tap)---you will
+  ##need help with this part. Do not leave or the instructor will mess with cables)
+##  Where your cables go--
+  ## cable 1 pf sense LAN1 -> plugs into class switch (pf switch that goes to the LAN1)
+## cable 2  pf sense LAN2 -> plugs into port 2 on tap (from pfsense to the tap (ingress traffic))
+  ## cable 3 NUC (port where the closet to middle screw in the back of the NUC) -> enp5s0 (port 5 monitor port on tap) (connect NUC to
+  ## monitor port on the TAP, not an actual monitor--mirrors traffic and just observes traffic)
+## cable 4  NUC eno1 -> port 1 on the tap  (passes info through the switch)
+  ## you need to turn on your NUC and let it boot up once you mess with the cables
+
+Gigamon notes
+network ports = ingress ports (where data arrives at your gigamon)
+tool ports = egress (this connects to your sensor/tap) --can have multiple tool ports,
+types of tapping strategies: inline or span or port mirroring
+port mirror is good for can't be touched from a port perspective, causes network outage to fix it. better for lateral mvmt
+traffic can oversaturate the port and the first thing it will drop is the mirror port
+inline--
+
+
+
+
+
+
+
+
+
+
+  -

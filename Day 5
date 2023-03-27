@@ -1,0 +1,13 @@
+## Installing Filebeat
+
+sudo yum install filebeat
+cd /etc/filebeat
+##to get into the config file
+mv filebeat.yaml filebeat.bak
+curl -L -O http://192.168.2.20:8080filebeat.yml
+sudo vi filebeat.yaml
+##no changes to this file
+##issues with filebeat it will be seen in /var/log
+:wq
+sudo systemctl start filebeat
+sudo /usr/share/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list

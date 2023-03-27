@@ -1,0 +1,74 @@
+push to repo --> get init
+ls -al
+cmd line "git remote add origin http://192.168.2.20:3000/schneider6167/student_2.git"
+
+#pfsense
+1. insert USB stick
+2. plug in keyboard
+3. power on
+4. turn-on/boot (F11 to boot)
+5. select  first "UEFI: General USB Flash Disk 1100"
+6. hit enter on the next screen
+7. hit enter again, takes you to an install screen
+
+## install pfsense
+1. hit enter on the install screen
+2. continue with default keymap
+3. How would you like to partition your disk?
+  3a. highlight Auto (UFS) and hit enter
+4. how do you want to partition? choose entire partition
+5. This will erase disk hit YES
+6. parition scheme for the volume hit GUID partition table
+7. finish and commit
+8. DO NOT make any final configurations--NO
+9. reboot and pull USB
+## Options should list out 16 options
+1. use static IPs
+2. select option 1 assign interface
+  2b. do not set VLANs-NO
+3. enter WAN interface name-WAN static  tpye: em0
+4. type LAN interface: em1
+5. for optional interface: type nothing, hit enter
+6. Do you want to proceed? y (takes you back to the enter an option page)
+## options should list out 16 Options
+1. Select option 2 set interface(s) IP address
+2. enter number of interfaces you wish to configure: 1 (for WAN)
+3. configure DHCP:       y (ipv4)               n (ipv6)
+4. do you want to revert to HTTP as the webconfigureator protocol? n
+5. hit enter to continue
+## options should list out 16 Options
+1. select 2
+2. select 2 again (LAN)
+3. enter IPv4 address: 172.16.x.1/24 (x is your student number with a 0, yours is 20)
+172.16.20.1/24
+4. no to webconfigureator
+5. no to DHCP on for LAN
+
+##Plug notebook into LAN side of pfsense firewall
+1. take patch cable and plug it into your laptop
+2. plug the other end into LAN2 (LAN address)
+3. go into laptop wireless settings (select wifi icon, select wired connecting, select IPv4, manual)
+3 contd. under addresses, in the address box type the IP 172.16.20.25
+4. netmask 255.255.255.0, gateway 172.16.20.1 click apply
+5. type gateway IP into browser
+6.  on the wifi/wired setting, turn wired off then on and refresh the IP
+configuring pfsense
+hostname is 20
+primary dns server: 192.168.2.1
+override DNS: leave checked
+timezone: Etc/UTC used for time normalization
+next
+next page, scroll to btm and uncheck Block RFC1918 Private Networks
+uncheck block bogon networks
+hit next again
+reset admin password
+once done hit reload
+password pfsense
+finish
+
+then go to Firewall select Rules
+create Rule
+
+go to services, dns resolver, uncheck enable DNS resolver, save and apply changes
+go to services DNS forwarder, uncheck enable DNS forwarder
+no changes

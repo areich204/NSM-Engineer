@@ -1,0 +1,259 @@
+Suricata IDS/IPs helps automate some of the malicious detection of rule writing
+  -sudo yum install suricata
+  -sudo -s (goes into root)
+  -cd /etc/suricata
+  -ls
+## ^ to make sure you have the yaml file
+  -sudo vi suricata.yaml (or sudo vi suricata)
+  - esc then, :set nu
+## don't forget to hit the insert key to edit
+## sets line numbers
+  -line 56 change to --> default-log-dir: /data/suricata/
+  -line 60 change to --> no
+  -line 76 change to --> no
+  -esc :557 enter to jump to 557, then insert to edit
+  -line 557 (console) change to --> no
+  -line 579 (af-packet interface) change to --> enp5s0
+## what makes suricata work good vs better do CPU pinning, don't pin the same core on Zeek and suricata, starts around
+## 582 threads, if Zeek is running and suricata is not, look at suricata configs line 582
+## if you do an overwrite file add at the end in the #includes selection
+  -:wq
+
+  -sudo vi /etc/sysconfig/suricata
+## telling suricata which interface to use when it starts up
+  -change OPTIONS to --> OPTIONS="--af-packet=enp5s0 --user suricata "
+## make sure you have a space at the end before your last quotation
+  -:wq
+
+## check to make sure suricata is running before proceeding
+  -sudo systemctl start suricata
+  -sudo systemctl status suricata
+## data/suricata is where files should be stored
+  -cd /data/suricata/
+  -ls
+## shows if the files are good going to the set file
+  -sudo systemctl stop suricata
+
+## adding the source of the emerging threat rules to suircata
+  -sudo suricata-update add-source local-emerging-threats http://192.168.2.20:8080/emerging.rules.tar
+  -sudo suricata-update
+## when you change or update the rules
+  - ls -al
+  -sudo chown -R suricata: /data/suricata
+  -sudo systemctl start suricata
+  -tail -f eve.json
+## uses tail cmd and follows the file as it get bigger
+-curl -L -O http://192.168.2.20:8080/all-class-files.zip
+## previous cmd makes traffic
+
+## Kafka notes
+## Topic is the datastream whatever json format (kafka organizes everything into topics --> zeek raw, suricata raw, and fsf raw, edr raw)
+##Kafka connected to logstash
+##zookeeper is the manager of kafka (zookeeper keeps the kafka service running and organizaed, doesn't collect data)
+## partitions where the data is parked/placed
+## Replicas
+
+
+##Installing Kafka, Zookeeper:
+-sudo yum install kafka zookeeper librdkafka
+## configure zookeeper before Kafka
+-cd /etc/Zookeeper
+ls
+## look for zoo.cfg file
+-sudo vi /etc/zookeeper/zoo.cfg
+-insert
+-add text: server.1=localhost:2182:2183
+##2182/2183 one for the leader/follower, 2183 is for elections--who's in charge here.
+-:wq
+-systemctl start zookeeper
+-systemctl status zookeeper
+-sudo vi /etc/kafka/server.properties
+-insert
+-change broker.id=1 (labels what kafka belongs to which zookeeper) (broker id in zookeeper lives in var/lib)
+-set nu
+VERY IMPORTANT -line 31 change to uncomment it, change url to listerners=PLAINTEXT://localhost:9092 (VERY IMPORTANT)
+-line 36 uncomment it, change url to what's listed in the URL above (VERY IMPORTANT)
+-line 60 uncomment log.dirs=/data/kafka
+-line 65 uncomment change to num.partitions=1 (may done already)
+-log 103 uncomment log.retention.hours=3 (for class purposes may be different in a prod environment
+
+double check lines below
+-line 107 uncomment log.retention.bytes=1073741824 (just uncomment it)
+-line 114 uncomment change ms to 300000
+-line 123 uncomment =localhost 2181
+-:wq
+
+
+
+##configuring server and producer
+-sudo vi server.properties
+-sudo cd /usr/shar/kafka
+-cd /usr/share/kafka/config/
+
+
+-ls
+-sudo vi producer.properties
+-insert (i)
+-add line below to end of file
+-zookeeper.connect=localhost:2181
+-add line bootstrap.servers=localhost=2181
+## command above goes below bootstrap.servers...
+-:wq
+
+-sudo vi consumer.properties
+-o (goes to new line in vim)
+-zookeeper.connect=localhost:2181 (add this line)
+-zookeeper.connection.timeout.ms=6000 (add this line)
+-exit
+
+-cd /data/kafka
+-ls -al
+
+##we created the dir now we need to set permissions
+-sudo chown -R kafka: data/kafka/
+## -R makes it recurrsive
+-ls -al
+## the file should now  be owned by kafka
+-sudo firewall-cmd --add-port={9092,2181,2182,2183}/tcp --permanent
+-sudo firewall-cmd --reload
+##feedback should tell you if it worked...success
+##open firewall ports
+-sudo firewall-cmd --list-all
+-sudo firewall-cmd --list-all-zones (this is better)
+
+-sudo systemctl start Zookeeper
+-sudo systemctl status Zookeeper
+-repeat for Kafka
+
+#########################################################################################################
+notes
+-sudo cat /proc/cpuinfo | egrep -e 'processor|physical id|core id' | xargs -l3
+
+command and output example:
+[student@sg8 ~]$ sudo cat /proc/cpuinfo | egrep -e 'processor|physical id|core id' | xargs -l3
+processor : 0 physical id : 0 core id : 0
+processor : 1 physical id : 0 core id : 1
+processor : 2 physical id : 0 core id : 2
+processor : 3 physical id : 0 core id : 3
+processor : 4 physical id : 0 core id : 0
+processor : 5 physical id : 0 core id : 1
+processor : 6 physical id : 0 core id : 2
+processor : 7 physical id : 0 core id : 3
+##Don't pin the first core and don't pin a core twice aka hyper thread
+## physical id means physical dye on the motherboard
+
+#############################  Installing zeek  ###########################################################
+sudo yum install zeek zeek-plugin-kafka zeek-plugin-af_packet
+-cd /etc/zeek/
+-sudo vi networks.cfg **no chages we made in this file***
+-sudo vi zeekctl.cfg
+-:set nu
+line 67: change to /data/zeek
+##line 77 #afpacket configurations (this is a comment for line 78)
+add lb_custom.InterfacePrefix=af_packet::
+esc :wq
+
+sudo vi node.cfg
+
+#**make your configs look like the one below***
+# Example ZeekControl node configuration.
+#
+# This example has a standalone node ready to go except for possibly changing
+# the sniffing interface.
+
+# This is a complete standalone configuration.  Most likely you will
+# only need to change the interface.
+#[zeek]
+#type=standalone
+#host=localhost
+#interface=eth0
+
+## Below is an example clustered configuration. If you use this,
+## remove the [zeek] node above.
+
+[logger]
+type=logger
+host=localhost
+
+[manager]
+type=manager
+host=localhost
+pin_cpus=1 (add this)
+
+[proxy-1]
+type=proxy
+host=localhost
+
+[worker-1]
+type=worker
+host=localhost
+interface=enp5s0
+pin_cpus=2,3
+lb_method=custom
+lb_procs=2
+env_vars=fanout_id=93
+
+#
+#[worker-2]
+#type=worker
+#host=localhost
+#interface=eth0
+:wq
+
+
+## setting up protocol analyzers, adding a few analyzers
+-cd /usr/share/zeek/site
+-sudo mkdir scripts
+-cd scripts/
+-curl -L -O http://192.168.2.20:8080/zeek_scripts/afpacket.zeek
+-ls -al
+-curl -L -O http://192.168.2.20:8080/zeek_scripts/extension.zeek
+-ls -al
+cd ..
+sudo vi local.zeek
+
+chown -R zeek: /etc/zeek
+chown -R zeek: /var/spool/zeek
+chown -R zeek: /data/zeek
+chown -R zeek: /usr/share/zeek
+
+## modify config file at the btm to include...
+-# other scripts
+-@load ./scripts/afpacket.zeek
+-@load ./scripts/extension.zeek
+-esc :wq
+
+zeekctl deploy
+sudo chown -R zeek: zeek/
+cd /data/
+sudo chown
+
+
+cd /usr/share/zeek/site
+cd scripts/
+curl -L -O http://192.168.2.20:8080/zeek_scripts/kafka.zeek
+sudo vi kafka.zeek
+##in the file insert and change to localhost
+["metadata.broker.list"] = "localhost:9092");
+the write quite, esc :wq
+
+curl -L -O http://192.168.2.20:8080/zeek_scripts/json.zeek
+cd ..
+sudo vi local.zeek
+
+##add this to the bottom of the config file...
+#other scripts
+@load ./scripts/afpacket.zeek
+@load ./scripts/extension.zeek
+@load ./scripts/json.zeek
+@load ./scripts/kafka.zeek
+
+##anytime you do a change to a .zeek file you need to redeploy zeek
+zeekctl deploy
+
+cd /usr/share/kafka/bin/
+sudo /usr/share/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+##should get zeek-raw back, takes a minute--if there are kafka config issues that populate it's becauase one node was
+only established
+ sudo /usr/share/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic zeek-raw
+ sudo /usr/share/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhots:9092 --topic zeek-raw
