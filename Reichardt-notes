@@ -1,0 +1,856 @@
+# Kit tools
+
+## Suricata (IDS)
+  - Processes Alerts
+  - Signature based analysis
+  - Writes to eve.json
+
+## Zeek (META)
+  - Parses Data via network protocols
+  - Highest CPU usage
+  - Matches the metadata to RFCs to determine which lig to write to
+  - Supports port independent protocol analysis
+
+## stenographer
+  - takes full pcap to index it
+  - writes faster than it reads
+  - first-in and first-out for writing data
+  - Standard 90% write 10% read
+
+## Kafka (Buffer)
+  - message queue
+  - Producers and users are agnostic (do not depend on each other)
+  - load balances so we don't crash the back end of the sensors
+  - As long as their is enough space it can hold onto data in the buffer as long as needed to allow ingest (smooths out spikes in data)
+
+## Zookeeper
+  - manages Kafka and what it can do
+
+## Elasticsearch
+  - Data warehouse
+  - storage Database
+
+## Filebeat
+
+  - Assists in the transfer of data
+  - low CPU useage
+  - Not recommended to received traffic from zeek due to inability to read and write at the same time
+
+*** Kibana does not store data!!
+
+## Logstash
+  - data enrichment / data normalization
+  - Can ingest from multiple sources
+  - Only changes the field information, not the actual data
+  - Can do data enrichment by reaching out to sources and adding information (like geo_location)
+  - Three stages 
+	- input - receives data from multiple sources
+	- modify - normalizes data into a common schema to be easily read
+	- output - sends normalizes data to next process
+
+## fsf ( file scanning framework)
+   - YARA rules
+   - for every file it will provide hashes
+   - written in python (deprecated, expecting replacement)
+   - uses a client / server relationship
+        - clients job is to take files from zeek and send them to the server
+        - can have multiple clients on different boxes
+
+
+   ** needs Zeek to extract files and send to fsf
+   ** if you do not have zeek running you can run a file against fsf and it produces a log then fsf is running
+   ** if you check fsf and it is working and then you start zeek and it doesn't work....then you have a problem with Zeek
+
+   # pfSense Installation
+## Hardware Setup
+
+Esc - enter BIOS Setup
+F11 - boot menu
+
+UFI Boot from USB
+
+
+this setting is fast, be ready!!
+
+## Initial Installation
+
+A - accept
+I- Installation
+<enter> - default US keymap
+Auto - Guided Disk Setup
+Entire disks
+Accept all default
+Finish
+... install runs...
+
+reboot
+
+Initial Config
+
+1) Assign Interfaces
+|LAN4 |LAN3 | LAN2 | LAN1 | COM|
+|-----|-----|------|------|----|
+1 - assign Interface
+n - skip vlan Setup
+em0 - WAN Interface
+em1 - LAN Interfaces
+(nothing to finish) y -proceed
+
+2) Set Interface IPs
+
+1- WAN infertace
+y - dhcp
+n - dhcp6
+blank for "none" y-http webcconfig protocol
+
+2- LAN int
+172.16.30.0/24
+<enter> for none
+<enter> for none - dhcp6
+y-enable dhcp
+172.16.30.100 - range start
+172.16.30.254 - range end
+y- http webcconfig protocol
+
+Finishing up (Wizard)
+
+In order to access the router, complete the following:
+
+  1. set your lab machine to static ip 172.16.30.10 # X== student group number
+  2. plug into the LAN interface (LAN2 on front face)and browse to 172.16.30.1
+  3. complete first login to web Gui
+
+default creds:
+```admin / pfsense```
+
+Wizard > pfSense Setup > General Information
+
+set hostname sg03-pfSense localdomain == local.LAN
+primary dns
+uncheck block private networks
+LAN ip address - 172.16.30.1
+subnet mask - 24
+set (and document)new admin password
+
+Add a WAN rule to allow laptops to connect to sensors.
+  * Source: 192.168.2.0/24 any any any
+
+Disable DNS Resolver
+Enable DNS Forwarder
+
+Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo```
+```rebind-domain-ok=/lab-repo/```
+
+  Common errors
+    1. Blocking private
+    2. Network restart
+    3. Uncheck resourses
+
+## Downloading the XML config file
+    -go to Diagnostic tab
+    -then click back up and restore
+
+    Installing CentOS
+    1. Plug NUC into Eth2, click F11 a millions times
+    2. Ensure you unplug your UGA cable and plug in your HDMI cable
+    3. Plug in the CentOS USB and boot from the USB
+    4. Click Network and hostname
+    5. Add your hostname at the bottom, sg3.lab.lan click apply
+    6. Click the top eth interface, click configure
+    7. Under IPV4 Settings click Automatic dhcp
+    8. Save and Done
+    9. Under IPV6 Settings click ignore
+    10. Save and Done
+    11. Click KDUMP and then disable, click Done
+    12. Click installation destination and select both disks and click done.
+    13. Reclaim space and then delete them all, click Done
+    14. Go back to the 2 disks and click I will configure partitioning
+
+    17. Click on "/home", desired capacity put 1Gib. Click update Settings
+    18. Repeat steps for "/ and swap"
+    19. Add Mount Points.
+        /var
+         /tmp
+        /var/log
+        /var/log/audit
+        /var/tmp
+        /data/stenographer
+        /data/suricata
+        /data/kafka
+        /data/elasticsearch
+          /data/zeek
+         /data/fsf
+
+    20. Set all mounts to 1 GiB
+    21. Select the root partition, on the right select volume group, click modify, select the one that is close to 500 GiB
+    22. click Save
+    23. click /data/zeek
+    24. create new volume group, select 1TB drive and rename centos_data, click Save
+    25. Go thru all the mount points that start with /data and add them to the Centos_data Volume group
+    26. Add drive size to the remaining mounts
+      "desired capacity"
+        /tmp 5GiB
+        /var 50GiB
+        /var/log 50 GiB
+        /var/log/audit 50GiB
+        /var/tmp 10GiB
+        /home 50 GiB
+        swap 10 GiB
+        / <blank> <---do last
+        /data/stenographer 500GiB
+        /data/suricata 25 GiB
+        /data/kafka 100GiB
+        /data/elasticsearch <Blank> <---do last
+        /data/zeek 25 GiB
+        /data/fsf 10 GiB
+        /boot 1 Gib
+        /boot/efi 1 Gib
+
+
+      27. Click done and accept changes
+      28. click begin Installation
+      29. Creat a user
+      30. Select "make this user as administrator"
+      31. Create password
+      32. Click Done
+      33. Click reboot and remove USB
+      34. Log in with new credentials
+***** Sudo -s*** will cut out having to type sudo before each command. until you log in again
+
+      * to check if your hostname saved
+          -type <hostname>
+
+      Disabling IPV6 dhcp
+        sudo vi /etc/sysctl.conf to check for IPV6
+
+        Then type:
+        net.ipv6.conf.disable_ipv6 = 1
+        net.ipv6.conf.default.disable_ipv6 = 1
+        net.ipv6.conf.lo.disable_ipv6 = 1
+
+      vi /etc/hosts  <local resolver for ips to known_hosts
+        go down one line to IPV6 and then type DD
+        take out the line that is ::1  is local loopback for IPV6
+        sudo systemctl restart network
+        sudo systemctl status network
+
+        ip a <-- to check to see if a manager IP pops
+        looking for 172.16.30.101
+        nmcli
+
+        sudo vi /etc/sysconfig/network-scripts/ifcfg-enp5s0
+          make sure bootproto = dhcp
+          make sure that onboot = yes
+
+        restart network services
+          systemctl restart network
+
+    #Tapping Configurations
+
+    ##Switch SPAN
+
+    A switch is a layer 2 device that uses MAC addresses to direct packets, but there are also layer 3 switches, also referred to as SMART / Managed switches.  They provide some addiiotional features like vlans, QoS, and others.  Most importantly in this content, a smart switch has the ability to assign a "span port."  When a configuring a span port, you can specify what port(s) ingress and egress traffic gets copied and sent over to span for mirror(ed) port.
+
+    ##Dedicated Tap
+
+    A tap is a piece of network hardware that duplicates all traversing packets to a physical port dedicated connection to a sensor. Packet loss is generally low with a tap as the duplication is happening at the hardware level.  But the performance comes as a price, with taps costing quite a bit more than cheaper options, plan on around $200
+
+    ## Bottom line
+
+    Biggest Considerations:
+      - tap=hardware & span=software
+      - switch load of > %50 is bad - span ports are resource intensive
+      - network's total bandwidth
+      -budget
+
+    ## Lab - COnfigure In-Line Tap
+    Here is a reference of how things will be interconnected:
+
+    # Collection Interface  Optimization
+
+    ## ethtool
+      a utility for modifiying a network card. We want to turn off any kind of offloading or other things the card would normally do because we want to allow our tools to capture them in a raw format, by allowing the NIC to interact with the packets we see them is not the best practice.
+
+    ## Why?
+      Offloading which sends network traffic processing to your network card instead of having your CPU do this. now in theory this
+
+# Before you SSH into your IP remove this file
+
+      rm .ssh/known_hosts
+ # Make sure you do a sudo -s
+eno1 - cpature interface
+
+# Downloading Tool from NUC
+  - Login using your account credentials
+  - type "cd /etc/yum.repos.d/"
+  - sudo mv CentOS-* /tmp/
+
+## For making a local repository
+   - "sudp curl -L -O http://192.168.2.20/share/local.repo "
+   - "sudo yum makecache fast" - takes everything in your repo and uses that instead of going and Downloading
+   - yum install tcpdump
+   -sudo tcpdump -i eno1
+
+  ## Will turn off a lot of extra stuff so we can properly collect the right traffic
+  "sudp curl -L -O http://192.168.2.20/share/interface.sh
+
+  move it to a tmp file
+  mv interface.sh /tmp/
+  change permission
+  sudo chmod 777 interface.sh
+  sudo ./interface.sh <----iterface Optimization scripts
+
+  run against interface eno1
+  cd /tmp
+  sudo ./interface.sh eno1
+
+  Open VI editor
+  vi /etc/sysconfig/network-scripts/ifcfg-eno1
+
+  change bootproto
+      -bootproto=none
+
+  change onboot
+      -onboot=yes
+  IPV6 change everything so it is turned off yes to no
+
+  Restart the network services
+    systemctl restart networks
+
+TODO order of events:
+  - installation
+  - networking
+  - interface Optimization
+  - test collection
+
+# Installing and configuring
+  -yum install stenographer
+
+  ## stenographer <---500GiB limit
+    - collects (pcap) <resource intensive on storage, processor,
+    - once it hits 80% of storage it will start to re-write on old data 80/20
+    - has extremely fast write speed <--will write to disk really fast, stores in its own format and then indexs it for us
+    - has slow read speed
+
+    /data/stenographer/
+    - 2 directories
+      - index
+      - packets
+
+      ***/data/*** <--- all logs will be stored Here, this directory is not there by default. Must create it
+
+      to figure out which steno type and where it is at
+      vi /etc/stenographer/config
+       change the first 2 lines in the config file
+        - "/data/stenographer/packets"
+        - "/data/stenographer/indeex"
+        -   change interface to eno1
+
+
+        stenokeys.sh stenographer stenographer
+
+        The /data/stenpgrapher/packets/index directoriesare not created by default and you will have to make them
+          - mkdir -p /data/stenographer/{packet,index}
+          cd /data/stenographer
+          ls
+          cd ..
+          chown -R stenographer:stenographer stenographer
+          ls -al
+          systemctl start stenographer
+          cd /data/stenographer/packets to verify you are getting packets
+          ls
+
+## Installing suricata
+    - yum install Suricata
+
+  edit the config file
+    - /etc/suricata/suricata.yaml
+
+    to add line number ": set nu
+    :56 to go to an exact line number
+      - line 56: /data/suricata/
+      - line 580: eno1
+      - line 60: enabled=no
+      - line 76: enabled=no
+      - line 404: enabled=no
+      - line 557: enabled=no
+      - line 582: uncomment, change to 4
+
+    vi /etc/sysconfig/Suricata
+      - options=" --af-packet=eno1 --user suricata"
+
+
+    cat /proc/cpuinfo | egrep -e 'processor|physical id|core id' | xargs -l3
+gives Information on Core <---no need to type it
+    OR
+
+    lscpu -e <-----short cut
+     - displays the amount of cores Physical and virtual
+     cannot pin cores to the same core id....it will crash
+
+
+  ## To update Suricata with Emergent threats
+  - suricata-update add-source emerging-threat http://192.168.2.20/share/emerging.rules.start
+  - suricata-update
+
+  ## change ownership of Suricata
+    - chown -R suricata:suricata Suricata
+     -systemctl start Suricata
+     - ^start^status
+
+cd /data/suricata
+
+   vi /etc/logrotate.d/suricata
+
+  Start Services lineup
+  - 1. stenographer
+  - 2. suricata
+  - 3. fsf
+  - 4. kafka
+  - 5. zeek
+
+# Installing FSF
+Two components Client / Server
+
+install FSF
+ - yum install fsf
+
+ Change the config file
+
+  - vi /opt/fsf/fsf-server/conf/config.py <--- 2 config files
+  - vi /opt/fsf/fsf-client/conf/config.py
+
+
+  - vi /opt/fsf/fsf-server/conf/config.py
+      -log path :/data/fsf
+      - yara path: /var/lib/yara-rules/rules.yara
+      - pid path: /run/fsf/fsf.pid
+      - export path: /data/fsf/archive
+
+      - active logging modules ['rockout']
+      - server config ip address "localhost
+
+    -vi /usr/lib/systemd/system/fsf.service
+        -PIDfile=/run/fsf/fsf.pid
+
+    cd /Data
+    mkdir -p /data/fsf/archive
+    chown -R fsf:fsf fsf/
+
+    -vi /opt/fsf/fsf-client/conf/config.py
+      - server config  --> ip addess localhost
+
+  firewall-cmd --add-port=5800/tcp --permanent
+     -fsf port is 5800, permanent means it will not return to non permanent at Restart
+
+  firewall-cmd --reload
+
+  systemctl start FSF
+
+  cd ~
+  create a file with something in it via vi
+  /opt/fsf/fsf-client/fsf_client.py --full (filename.txt)
+
+  cd /data/fsf <---should see rockout.log
+
+
+# kafka (is Zeek running)?
+
+## Producer
+  - Data origin
+
+## broker
+  - Topics (data source)
+
+## consumer
+  - subscribes
+
+  Consumer offset is ta way for the consumer (Logstash)  to track where it is in processes to the data from Kafka and it can also request data from kafta (broker)
+  9092 <---where Kafka it will be listening
+## Installing kafka
+  - sudo yum install kafka librdkafka Zookeeper -y
+  **Zookeeper must be started first!!
+
+1. sudo vi /etc/zoopkeeper/zoo.cfg
+   change the initLimit=5
+             synclimit=2
+  port 2181 is the port where the client connect to zookeeper on
+  uncomment maxclients=0
+  add new line--->server.1=localhost:2182:2183 <----election ports
+
+2. cd /var/lib/Zookeeper
+   touch myid
+   chown -R zookeeper:zookeeper myid
+   vi myid
+   put a 1 on the first line
+
+3. vi /etc/kafka/server.properties <----broker configuration
+   broker.id=1
+   listeners=PLAINTEXT://localhost:9092 line 36
+   uncomment line 36 (set nu) put in your user name (type hostname in the commandline)
+   line 60 change the directory /data/kafka/Logstash
+   logstash allocates workers to how many processes assigned to logstash
+   change line 103 to 12 hours
+   under line 122 add new lines (####)
+   enable.zookeeper=true
+   add line inside of the comment breaks
+   delete.topic.enable=true <---above Group Coor Settings
+
+## Editing Kafka Producers
+1. sudo vi /usr/share/kafka/config/producer.properties
+   replace line 21 localhost to hostname (localhost:"port")
+   new line #zookeeper
+   zookeeper.connect=localhost:2181
+
+## Consumers
+
+1. sudo vi /usr/share/kafka/config/consumer.properties <-----
+  line 19 change to hostname
+  line 21 under this line # Zookeeper
+  add:
+  line 22 zookeeper.connect=hostname:2181
+  line 23 zookeeper.connection.timeout.ms=6000
+
+ mkdir -p /data/kafka/logs
+ chown -R kafka:kafka /data/Kafka
+ firewall-cmd --permanent --add-port={9092,2181,2182,2183}/tcp
+ firewall-cmd --reload
+ firewall-cmd --list-all
+ systemctl start Zookeeper
+ systemctl start kafka
+
+cd /usr/share/kafka/bin
+sudo ./kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic zeek-raw
+sudo ./kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic suricata-raw
+sudo ./kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic fsf-raw
+sudo ./kafka-topics.sh --describe --zookeeper localhost:2181  --topic zeek-raw
+sudo ./kafka-topics.sh --describe --zookeeper localhost:2181  --topic suricata-raw
+sudo ./kafka-topics.sh --describe --zookeeper localhost:2181  --topic fsf-raw
+
+^^^^^^^
+
+## Zookeeper Port 2182(default) 2181, 2183
+  Zookeeper tracks metadata about the cluster itself
+  Tracks the state of the cluster
+
+  Topics:
+  zeek
+  Suricata
+  fsf
+
+  Goes thru an election process and performs a quarum
+
+
+## zeek
+Takes PCAP Data and analyzes it
+(ts - time stamp
+
+)
+- conn.log <---most important log with Zeek
+
+sudo yum install zeek zeek-plugin-kafka zeek-plugin-af_packet -y
+lscpu-e
+cd /etc/Zeek
+
+vi network.cfg <-----enables tagging for traffic coming across the wire
+inside of file you can tag certain local networks (8.8.8.8 Google)
+
+vi zeekctl.cfg
+line 67 /data/zeek/logs <----
+
+vi /node.cfg
+comment out lines 6-11
+uncomment everything under line 16 and delete worker 2 under host manager
+
+/etc/zeekzeekctl.cfg <--does lots of management for zeek
+
+node.cfg <----allow us to define the cluster and cluster settings
+af_packet <-----RING BUFFER
+
+*** ADD**** under manager section and above proxy
+pin_cpus=0
+change intferface on worker to---> af_packet::eno1
+
+under worker 1
+lb_methods=custom
+lb_procs=2
+pin_cpus=1,2
+env_vars=fanout_id=93
+
+cd /usr/share/zeek
+never modify base; modify site
+cd site
+mkdir scripts
+cd scripts
+curl -L -O http://192.168.2.20/share/zeek_scripts.tar.gz
+tar -zxvf zeek_scripts.tar.gz
+rm -rf zeek_scripts.tar.gz
+cd zeek_scripts
+vi kafka.zeek
+metadata line "localhost:9092
+vi afpacket.zeek "
+vi fsf.zeek
+
+
+/usr/share/zeek/site/zeek/scripts
+
+#Zeek to fsf
+
+automatically sends files to client of fsf
+vi json.zeek
+cd /usr/share/zeek/site
+vi local.zeek <-----allows you to edit scripts
+
+at end of the file
+line 104 @load scripts/zeek_scripts/json
+         @load scripts/zeek_scripts/afpacket
+         @load scripts/zeek_scripts/kafka
+         @load scripts/zeek_scripts/extension
+         @load scripts/zeek_scripts/extract-files
+         @load scripts/zeek_scripts/fsf
+
+      cd /data/zeek
+      mkdir logs
+   zeekctl deploy
+  /usr/share/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic zeek-raw --from-beginning <---shows data flowing thru kafka
+
+# Filebeat (Ships Data)
+
+  -Takes files and puts them into topics inside kafka
+
+  sudo yum install filebeat -y
+/etc/filebeat/filebeat.yml <---config file
+
+  cd /etc/Filebeat
+  vi filebeat.yml
+  Esc
+  mv /etc/filebeat/filebeat.yml /etc/filebeat/filebeat.yml.bak
+  curl -L -O http://192.168.2.20/share/filebeat.yml
+  vi filebeat.yml
+  sudo systemctl start Filebeat
+  sudo systemctl status Filebeat
+  systectl enable filebeat
+  sudo /usr/share/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic suricata-raw --from-beginning <---if this hangs...resstart filebeat
+  sudo /usr/share/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic fsf-raw --from-beginning
+
+***eve.json / rockout.log input files**
+
+
+# Logstash
+**Default port must be open for filebeats 5044
+/etc/logstash/logstash.yml <--base config file
+
+## Eve.json gets all of the alerts
+
+data normalization
+Data enrichment
+
+/etc/logstash/jvm.options <---sets heap size for
+min 4 Gib / max 8 GiB
+
+## Logstash Pipelines
+
+### Input
+    kafka-->needs group_id
+                topics (cares about the # of partitions)
+                    -/etc/logstash/conf.d
+                consumer-threads
+                bootstrap_servers--> tells where all of the brokers are
+### Filter
+    1. Date plugins where we can call date functions
+       -added @timestamp --> TS
+    2. Mutate plugin rename / create/ add fields
+  Data normalization
+  Data enrichment
+
+### output --> where its going
+     elasticsearch
+      -ip:port (localhost:9200)
+      ecs-tool-category-date
+cd /
+sudo yum install logstash -y
+cd /etc/logstash
+curl -L -O http://192.168.2.20/share/logstash.tar
+tar -xvf logstash.tar
+cd conf.d
+chown logstash:logstash /etc/logstash/conf.d
+chmod -R 744 /etc/logstash/conf.d/ruby
+rm -f /etc/logstash/logstash.tar
+vi logstash-500-filter-zeek-common.conf
+systemctl start logstash
+watch -d systemctl status logstash: will show you if it is running properly. If it is running in a booting loop it will continue to reboot after about a minute. Check the start time
+vi /var/log/logstash/logstash-plain.log
+
+suricata / zeek/fsf is on the same logstash pipeline:
+  input=>filter=>output
+
+  Filebeat pushs data to kafka
+  logstash pulls data from kafka
+
+# elasticsearch (indexes our data)
+Default Port 9200 <----listening port Data, 9300 <----Internal node communications
+
+Index -
+Cluster- multiple nodes
+Node
+  - Master Node manages the cluster <---Max amount per cluster is 3 odd #s only!!
+  - Data node indexes Data
+  - Ingest node index pipelines
+  - machine learning node deals with machine learning
+  - coordinating node(no roles assigned) directs you to the node with the data you are looking for
+  - transform node
+
+  Shards are searchable data
+
+  yum install elasticsearch -y
+  cd /Data
+  chown -R elasticsearch:elasticsearch elasticsearch
+
+vi /etc/elasticsearch/elasticsearch.yml <---config file
+  line 17 uncomment - cluster.name: sg03
+  line 23 uncomment - node.name: sensor-1
+  line 33 uncommnet - path.data: /data/elasticsearch
+  line 37 uncomment - /var/log/elasticsearch
+  line 43 uncomment
+  line 55 uncomment - network host: _local:ipv4_
+  multinode setup uses your actual ips so the machine
+  if logstash is going slowly then you ca go
+
+
+
+  mkdir .usr/lib/systemd/system/elasticsearch.service.d
+  vi /usr/lib/systemd/system/elasticsearch.service.d/override.conf
+     [service]
+        LimitMEMLOCK=infinity
+
+systemctl daemon-reload
+
+vi /etc/elasticsearch/jvm.options <--Max 31
+
+line 22: -xms4g
+line 23: -xms4g
+
+firewall-cmd --add-port={9200,9300}/tcp --permanent
+firewall-cmd --reload
+
+systemctl start elasticsearch
+systemctl status elasticsearch
+
+curl localhost:9200/_cat/nodes
+curl localhost:9200/_cat/indices
+
+## API
+
+  _cat/indices
+  _cat/nodes
+  _cat/health
+  _cat/templates
+
+# Kibana <---Provides web interface that allows to query elasticsearch, give metrics....etc
+
+yum install kibana -y
+
+1. vi /etc/kibana/kibana.yml <---config file
+
+default server port 5601
+line 7 uncomment and change localhost to 172.16.30.101 because we will be connecting to the web and it will not work if it says localhost
+line 28:elasticsearch.hosts:["http://localhost:9200"] <--uncomment
+
+firewall-cmd --add-port=5601/tcp --permanent
+firewall-cmd --reload
+systemctl start Kibana
+systemctl status Kibana
+
+on firefox type 172.16.30.101:5601
+
+create index patterns
+stack management
+index patterns
+
+  - ecs*
+  - ecs-zeek*
+  - ecs-Suricata*
+  - ecs-fsf*
+
+make them all timestamps
+  cd ~
+  curl -L -O http://192.168.2.20/share/ecskibana.tar
+  tar -xvf ecskibana.tar
+  cd ecskibana
+  ./import-index-templates.sh <---index mapping for the various fields
+
+  Index mappings:
+    -IP
+    -number
+    -date
+    -strings
+    -boolean
+    -geo
+
+  date -s YYYY-MM-DD
+    date -s HH:MM:ss
+
+  to do searches Kibana-->hamburger-->Dev tools
+
+  search in kibana _cat/templates_
+
+
+# TROUBLESHOOTING
+
+tcpdump on Interface
+  journalctl -xe <---to figure out what issues you have with config files...etc
+  zeekctl status <---to check the status of zeek
+
+ss -lnt
+  -lists ports
+
+firewall-cmd
+
+journalctl is used seeing errors as they occur
+If logstash is in a bootloop use this command
+
+
+# Resource Allocation
+
+RHEL OS- 1 Core / 1 Gig <--of memory--->1/1
+ESXI     2 core / 4 Gig
+Zeek     5 full cores / 16 GiG --->25 FC/ 32
+Steno    2 cores / 4-6 Gigs ---->10/12
+Suricata 18 cores / 16 Gigs ---->24/32
+FSF      2 core / 2 GiG ----->2/2
+Kafka    6 cores / 12 Gigs----> 12/16
+Filebeat 1 core / Gigs 1/1
+  CORES=Threads
+  Full Core
+
+  add all cores
+  divide by 2
+  add the full cores <---look at pics on you phone
+
+1 Full core = 2 threads
+
+Sensor 24 Cores / 64 Gigs-----> 57/128
+
+
+
+Logstash
+6  CORES
+4-8 GiGs
+
+elasticsearch
+2-8 CORES
+31-64 GiGs
+
+Kibana
+2-4 CORES
+4 GiGs
+
+
+OS
+10G zeek
+10G suricata
+10 G steno
+FB
+Zookeeper
+kafka
+FSF
