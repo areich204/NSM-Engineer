@@ -18,11 +18,13 @@
   - Standard 90% write 10% read
 
 ## Kafka (Buffer)
-  - message queue
+  - message queue tool
   - Producers and users are agnostic (do not depend on each other)
   - load balances so we don't crash the back end of the sensors
   - As long as their is enough space it can hold onto data in the buffer as long as needed to allow ingest (smooths out spikes in data)
 
+## AF Packaet
+	- Ring buffer
 ## Zookeeper
   - manages Kafka and what it can do
 
@@ -89,7 +91,7 @@ Initial Config
 
 1) Assign Interfaces
 |LAN4 |LAN3 | LAN2 | LAN1 | COM|
-| ----- | ----- | ------ | ------ | ---- |
+| ----- | ----- | ------- | ------ | ----- |
 1 - assign Interface
 n - skip vlan Setup
 em0 - WAN Interface
