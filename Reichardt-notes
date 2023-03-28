@@ -235,7 +235,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
           systemctl restart network
 
     #Tapping Configurations
-    
+
 
     ##Switch SPAN
 
@@ -285,36 +285,49 @@ eno1 - cpature interface
    - "sudo tcpdump -i eno1"
 
   #Sniffing Traffic
+  ##Will turn off a lot of extra stuff so we can properly collect the right traffic
+
    - "ip a" Displays interfaces
    - "ethtool -k enp5s0" Displays information related to the specified interface
    - "curl -lO http://192.168.2.20:8080/interface_prep.sh" download the course interface script
    - "chmod +x interface_prep.sh" Makes the downloaded script executable
+   - "./ interface_prep.sh" Runs the script
+   - Change directory into "/sbin"
+   - "curl -lO http://192.168.2.20:8080/ifup-local" download another script-then make executable and run
+   - cd to /etc/sysconfig/network-scripts and add the following script to the end of the "ifup" file
+```
+   if [-x /sbin/ifup-local ]; then
+     		/sbin/ifup-local ${DEVICE}
+     fi
+     ```
+```sudo !!``` reruns the previous command as sudo
 
-  ## Will turn off a lot of extra stuff so we can properly collect the right traffic
-  "sudo curl -L -O http://192.168.2.20/share/interface.sh
-
-  move it to a tmp file
-  mv interface.sh /tmp/
-  change permission
-  sudo chmod 777 interface.sh
-  sudo ./interface.sh <----iterface Optimization scripts
-
-  run against interface eno1
-  cd /tmp
-  sudo ./interface.sh eno1
-
-  Open VI editor
-  vi /etc/sysconfig/network-scripts/ifcfg-eno1
-
-  change bootproto
-      -bootproto=none
-
-  change onboot
-      -onboot=yes
-  IPV6 change everything so it is turned off yes to no
+- "vi /etc/sysconfig/network-scripts/ifcfg-enp5s0" opens up the configuration file for the interface
+  ## change the following
+```
+  TYPE=Ethernet
+  PROXY_METHOD=none
+  BROWSER_ONLY=no
+  BOOTPROTO=none
+  DEFROUTE=yes
+  IPV4_FAILURE_FATAL=no
+  IPV6INIT=yes
+  IPV6_AUTOCONF=no
+  IPV6_DEFROUTE=no
+  IPV6_FAILURE_FATAL=no
+  IPV6_ADDR_GEN_MODE=stable-privacy
+  NAME=enp5s0
+  UUID=c11d2c5a-d0ee-421a-935a-d9acad4b5e18
+  DEVICE=enp5s0
+  ONBOOT=yes
+  NM_CONTROLLED=no
+```
 
   Restart the network services
-    systemctl restart networks
+    ```systemctl reboot```
+    - Connect sniffing port on NUC to the monitor port on the taps
+    -Remove management ethernet from firewall and connect it to port 1 on the tap
+    - yum install tcpdump
 
 TODO order of events:
   - installation
