@@ -43,7 +43,7 @@
   - Can ingest from multiple sources
   - Only changes the field information, not the actual data
   - Can do data enrichment by reaching out to sources and adding information (like geo_location)
-  - Three stages 
+  - Three stages
 	- input - receives data from multiple sources
 	- modify - normalizes data into a common schema to be easily read
 	- output - sends normalizes data to next process
@@ -89,7 +89,7 @@ Initial Config
 
 1) Assign Interfaces
 |LAN4 |LAN3 | LAN2 | LAN1 | COM|
-|-----|-----|------|------|----|
+| ----- | ----- | ------ | ------ | ---- |
 1 - assign Interface
 n - skip vlan Setup
 em0 - WAN Interface
@@ -104,31 +104,31 @@ n - dhcp6
 blank for "none" y-http webcconfig protocol
 
 2- LAN int
-172.16.30.0/24
+172.16.40.0/24
 <enter> for none
 <enter> for none - dhcp6
 y-enable dhcp
-172.16.30.100 - range start
-172.16.30.254 - range end
+172.16.40.100 - range start
+172.16.40.254 - range end
 y- http webcconfig protocol
 
 Finishing up (Wizard)
 
 In order to access the router, complete the following:
 
-  1. set your lab machine to static ip 172.16.30.10 # X== student group number
-  2. plug into the LAN interface (LAN2 on front face)and browse to 172.16.30.1
+  1. set your lab machine to static ip 172.16.40.10 # X== student group number
+  2. plug into the LAN interface (LAN2 on front face)and browse to 172.16.40.1
   3. complete first login to web Gui
 
 default creds:
-```admin / pfsense```
+```admin:pfsense```
 
 Wizard > pfSense Setup > General Information
 
 set hostname sg03-pfSense localdomain == local.LAN
 primary dns
 uncheck block private networks
-LAN ip address - 172.16.30.1
+LAN ip address - 172.16.40.1
 subnet mask - 24
 set (and document)new admin password
 
@@ -151,16 +151,17 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
     -then click back up and restore
 
     Installing CentOS
-    1. Plug NUC into Eth2, click F11 a millions times
+    1. Plug NUC into Eth2 control port and then into the LAN port on LAN 2
     2. Ensure you unplug your UGA cable and plug in your HDMI cable
-    3. Plug in the CentOS USB and boot from the USB
-    4. Click Network and hostname
-    5. Add your hostname at the bottom, sg3.lab.lan click apply
-    6. Click the top eth interface, click configure
-    7. Under IPV4 Settings click Automatic dhcp
-    8. Save and Done
-    9. Under IPV6 Settings click ignore
+    3. Plug in the CentOS USB and boot from the USB with F10
+    4. Select language and then click Network and hostname
+    5. Select your LAN port (eno1) and turn on
+    6. Add your hostname at the bottom, ```sg4.local.lan``` click apply
+    7. Enter IPV4 settings and set method to static (manual)
+    8. Under addresses set the sensor address (172.1.40.100) netmask (255.255.255.0) and gateway (172.16.40.1)
+    9. Under IPV6 Settings select ignore under method
     10. Save and Done
+    11. Go to date and time and set ```Region:Etc``` ```City:Coordinated Universal Time``` and turn ```Network Time``` "ON"
     11. Click KDUMP and then disable, click Done
     12. Click installation destination and select both disks and click done.
     13. Reclaim space and then delete them all, click Done
