@@ -166,56 +166,44 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
     12. Click installation destination and select both disks and click done.
     13. Reclaim space and then delete them all, click Done
     14. Go back to the 2 disks and click I will configure partitioning
-
+    15. Select blue link to partition automatically
     17. Click on "/home", desired capacity put 1Gib. Click update Settings
     18. Repeat steps for "/ and swap"
     19. Add Mount Points.
-        /var
-         /tmp
-        /var/log
-        /var/log/audit
-        /var/tmp
-        /data/stenographer
-        /data/suricata
-        /data/kafka
-        /data/elasticsearch
-          /data/zeek
-         /data/fsf
+    |   Mount + Point   | Volume Group | Capacity |
+    | ----------------- | ------------ | -------- |
+    |       /tmp        |    VG_OS     |   50GiB  |
+    |       /var        |    VG_OS     |   50GiB  |
+    |     /var/log      |    VG_OS     |   50GiB  |
+    | /var/log/audit    |    VG_OS     |   50GiB  |
+    |     /var/tmp      |    VG_OS     |   10GiB  |
+    |      /home        |    VG_OS     |   50GiB  |
+    |       swap        |    VG_OS     |    4GiB  |
+    |         /         |    VG_OS     |   BLANK  |
+    |/data/stenographer |   VG_DATA    |  500GiB  |
+    |  /data/suricata   |   VG_DATA    |   25GiB  |
+    |    /data/kafka    |   VG_DATA    |  100GiB  |
+    |    /data/zeek     |   VG_DATA    |   25GiB  |
+    |     /data/fsf     |   VG_DATA    |   10GiB  |
+    |/data/elasticsearch|   VG_DATA    |   BLANK  |
 
     20. Set all mounts to 1 GiB
     21. Select the root partition, on the right select volume group, click modify, select the one that is close to 500 GiB
+        Rename to ```VG_OS``` select SAVE and ```Update Settings```
     22. click Save
     23. click /data/zeek
-    24. create new volume group, select 1TB drive and rename centos_data, click Save
-    25. Go thru all the mount points that start with /data and add them to the Centos_data Volume group
-    26. Add drive size to the remaining mounts
-      "desired capacity"
-        /tmp 5GiB
-        /var 50GiB
-        /var/log 50 GiB
-        /var/log/audit 50GiB
-        /var/tmp 10GiB
-        /home 50 GiB
-        swap 10 GiB
-        / <blank> <---do last
-        /data/stenographer 500GiB
-        /data/suricata 25 GiB
-        /data/kafka 100GiB
-        /data/elasticsearch <Blank> <---do last
-        /data/zeek 25 GiB
-        /data/fsf 10 GiB
-        /boot 1 Gib
-        /boot/efi 1 Gib
+    24. create new volume group, select 1TB drive and rename ```VG_DATA```, click Save
+    25. Go thru all the mount points that start with /data and add them to the ```VG_DATA``` Volume group
+    26. Add drive size to the remaining mounts saving ```/``` for last
 
-
-      27. Click done and accept changes
-      28. click begin Installation
-      29. Creat a user
-      30. Select "make this user as administrator"
-      31. Create password
-      32. Click Done
-      33. Click reboot and remove USB
-      34. Log in with new credentials
+    27. Click done and accept changes
+    28. click begin Installation
+    29. Creat a user
+    30. Select "make this user as administrator"
+    31. Create password
+    32. Click Done
+    33. Click reboot and remove USB
+    34. Log in with new credentials
 ***** Sudo -s*** will cut out having to type sudo before each command. until you log in again
 
       * to check if your hostname saved
@@ -236,7 +224,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
         sudo systemctl status network
 
         ip a <-- to check to see if a manager IP pops
-        looking for 172.16.30.101
+        looking for 172.16.40.101
         nmcli
 
         sudo vi /etc/sysconfig/network-scripts/ifcfg-enp5s0
