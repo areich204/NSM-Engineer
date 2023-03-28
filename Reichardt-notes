@@ -235,6 +235,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
           systemctl restart network
 
     #Tapping Configurations
+    
 
     ##Switch SPAN
 
@@ -272,16 +273,25 @@ eno1 - cpature interface
 # Downloading Tool from NUC
   - Login using your account credentials
   - type "cd /etc/yum.repos.d/"
-  - sudo mv CentOS-* /tmp/
+  - sudo "mv CentOS-* /tmp/" or "rm -r CentOS-*"
 
 ## For making a local repository
-   - "sudp curl -L -O http://192.168.2.20/share/local.repo "
-   - "sudo yum makecache fast" - takes everything in your repo and uses that instead of going and Downloading
-   - yum install tcpdump
-   -sudo tcpdump -i eno1
+   - "sudo curl -L -O http://192.168.2.20/local.repo "
+   - "sudo yum makecache" - takes everything in your repo and uses that instead of going and Downloading
+	 - "yum update" updates packages
+	 - "yum list zeek" shows information about zeek
+	 - "systemctl reboot" restarts all system daemons
+   - "yum install tcpdump"i
+   - "sudo tcpdump -i eno1"
+
+  #Sniffing Traffic
+   - "ip a" Displays interfaces
+   - "ethtool -k enp5s0" Displays information related to the specified interface
+   - "curl -lO http://192.168.2.20:8080/interface_prep.sh" download the course interface script
+   - "chmod +x interface_prep.sh" Makes the downloaded script executable
 
   ## Will turn off a lot of extra stuff so we can properly collect the right traffic
-  "sudp curl -L -O http://192.168.2.20/share/interface.sh
+  "sudo curl -L -O http://192.168.2.20/share/interface.sh
 
   move it to a tmp file
   mv interface.sh /tmp/
