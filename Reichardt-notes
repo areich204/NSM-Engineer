@@ -174,7 +174,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
     19. Add Mount Points.
     |   Mount + Point   | Volume Group | Capacity |
     | ----------------- | ------------ | -------- |
-    |       /tmp        |    VG_OS     |   50GiB  |
+    |       /tmp        |    VG_OS     |   5GiB  |
     |       /var        |    VG_OS     |   50GiB  |
     |     /var/log      |    VG_OS     |   50GiB  |
     | /var/log/audit    |    VG_OS     |   50GiB  |
@@ -209,6 +209,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
 
       * to check if your hostname saved
           -type <hostname>
+      vi /etc/sysconfig/network-scripts/ifcfg-eno1
 
       Disabling IPV6 dhcp
         sudo vi /etc/sysctl.conf to check for IPV6
@@ -228,11 +229,14 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
         nmcli
 
         sudo vi /etc/sysconfig/network-scripts/ifcfg-enp5s0
-          make sure bootproto = dhcp
+          make sure bootproto = none
           make sure that onboot = yes
 					Change all IPV6 to ```No```
         restart network services
           systemctl restart network
+
+          On client ssh-keygen r 172.16.40.100
+
 
     #Tapping Configurations
 

@@ -1,0 +1,22 @@
+cd /etc/yum.repos.d/
+mv CentOS-* /tmp/
+curl -lO http://192.168.2.20/local.repo
+sudo yum makecache
+yum update
+yum list zeek
+systemctl reboot
+
+yum install tcpdump
+tcpdump -i eno1
+
+ethtool -k enp5s0
+curl -lO http://192.168.2.20:8080/interface_prep.sh
+chmod +x interface_prep.sh
+
+#change directory to /sbin
+
+curl -lO http://192.168.2.20:8080/ifup-local
+cd /etc/sysconfig/network-scripts
+echo "if [-x /sbin/ifup-local ]; then\n        /sbin/ifup-local ${DEVICE}\nfi" >> ifup
+echo "TYPE=Ethernet\nPROXY_METHOD=none\nBROWSER_ONLY=no\nBOOTPROTO=none\nDEFROUTE=yes\nIPV4_FAILURE_FATAL=no\nIPV6INIT=yes\nIPV6_AUTOCONF=no\nIPV6_DEFROUTE=no\nIPV6_FAILURE_FATAL=no\nIPV6_ADDR_GEN_MODE=stable-privacy\nNAME=enp5s0\nUUID=c11d2c5a-d0ee-421a-935a-d9acad4b5e18\nDEVICE=enp5s0\nONBOOT=yes\nNM_CONTROLLED=no" | /etc/sysconfig/network-scripts/ifcfg-enp5s0
+systemctl reboot
