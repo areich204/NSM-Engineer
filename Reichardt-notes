@@ -343,6 +343,7 @@ TODO order of events:
     - once it hits 90% of storage it will start to re-write on old data 90/10
     - has extremely fast write speed <--will write to disk really fast, stores in its own format and then indexs it for us
     - has slow read speed
+    - Written in GO language
 
     /data/stenographer/
     - 2 directories
@@ -355,7 +356,7 @@ TODO order of events:
       vi /etc/stenographer/config
        change the first 2 lines in the config file
         - "/data/stenographer/packets"
-        - "/data/stenographer/indeex"
+        - "/data/stenographer/index"
         -   change interface to eno1
 
 
@@ -371,6 +372,8 @@ TODO order of events:
           systemctl start stenographer
           cd /data/stenographer/packets to verify you are getting packets
           ls
+          journalctl -xeu stenographer
+          watch ls -al
 
 ## Installing suricata
     - yum install Suricata
