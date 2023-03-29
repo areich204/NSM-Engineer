@@ -1,0 +1,16 @@
+yum install stenographer -y
+wait
+cd /etc/stenographer
+echo -e "{\n  "Threads": [\n    { "PacketsDirectory": "/data/stenographer/packets"\n    , "IndexDirectory": "/data/stenographer/index"\n    , "MaxDirectoryFiles": 30000\n    , "DiskFreePercentage": 10\n    }\n  ]\n  , "StenotypePath": "/usr/bin/stenotype"\n  , "Interface": "em1"\n  , "Port": 1234\n  , "Host": "127.0.0.1"\n  , "Flags": []\n  , "CertPath": "/etc/stenographer/certs"/n}" > config
+sudo mkdir /data/stenographer/packets
+sudo mkdir /data/stenographer/index
+cd /data/
+chown -R stenographer:stenographer /data/stenographer
+stenokeys.sh stenographer stenographer
+
+systemctl start stenographer
+systemctl enable stenographer
+systemctl status stenographer
+wait
+#stenoread 'host 172.16.40.100' -nn 'src host 172.16.40.100'
+

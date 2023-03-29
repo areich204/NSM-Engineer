@@ -340,7 +340,7 @@ TODO order of events:
 
   ## stenographer <---500GiB limit
     - collects (pcap) <resource intensive on storage, processor,
-    - once it hits 80% of storage it will start to re-write on old data 80/20
+    - once it hits 90% of storage it will start to re-write on old data 90/10
     - has extremely fast write speed <--will write to disk really fast, stores in its own format and then indexs it for us
     - has slow read speed
 
