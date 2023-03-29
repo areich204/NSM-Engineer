@@ -1,20 +1,21 @@
 #! /bin/bash
 sudo -s #performs the following actions as a super user
 yum install suricata -y #Installs suricata and the -y bypasses the question phase
+wait
 cd /etc/suricata/
-sed '56 s@/var/log/suricata/@/data/suricata@' /etc/suricata/suricata.yaml # Verify
-sed '60 s/yes/no/' /etc/suricata/suricata.yaml
-sed '76 s/yes/no/' /etc/suricata/suricata.yaml
-sed '404 s/yes/no/' /etc/suricata/suricata.yaml
-sed '557 s/yes/no/' /etc/suricata/suricata.yaml
-sed '580 s/eth0/enp5s0/' /etc/suricata/suricata.yaml
-sed '582 s/#//' /etc/suricata/suricata.yaml
-sed '8 s@OPTIONS="-i eth0 --user suricata @OPTIONS="--af-packet=enp5s0 --user suricata @' /etc/sysconfig/suricata
+sed -i '56 s@/var/log/suricata/@/data/suricata@' /etc/suricata/suricata.yaml # Verify
+sed -i '60 s/yes/no/' /etc/suricata/suricata.yaml
+sed -i '76 s/yes/no/' /etc/suricata/suricata.yaml
+sed -i '404 s/yes/no/' /etc/suricata/suricata.yaml
+sed -i '557 s/yes/no/' /etc/suricata/suricata.yaml
+sed -i '580 s/eth0/enp5s0/' /etc/suricata/suricata.yaml
+sed -i '582 s/#//' /etc/suricata/suricata.yaml
+sed -i '8 s@OPTIONS="-i eth0 --user suricata @OPTIONS="--af-packet=enp5s0 --user suricata @' /etc/sysconfig/suricata
 suricata-update add-source local-emerging-threats http:192.168.2.20:8080/emerging.rules.tar
 suricata-update
 chown -R suricata: /data/suricata
 systemctl start suricata
 systemctl enable suricata
 systemctl status suricata
-curl LO 192.168.2.20:8080/all-class-files.zip #Generating traffic
-cat /data/suricata/eve.json | jq #Looks at the generated data
+#curl LO 192.168.2.20:8080/all-class-files.zip #Generating traffic
+#cat /data/suricata/eve.json | jq #Looks at the generated data

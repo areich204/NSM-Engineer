@@ -1,98 +1,15 @@
-=================================================================================================================
-                  00000                   ________           __  _         ______           _       _
-         0000 0000     000               / ____/ /___ ______/ /_(_)____   /_  __/________ _(_)___  (_)___  ____ _
-       00   000           0             / __/ / / __ `/ ___/ __/ / ___/    / / / ___/ __ `/ / __ \/ / __ \/ __ `/
-       0     0            00           / /___/ / /_/ (__  ) /_/ / /__     / / / /  / /_/ / / / / / / / / / /_/ /
-       00   00             0          /_____/_/\__,_/____/\__/_/\___/    /_/ /_/   \__,_/_/_/ /_/_/_/ /_/\__, /
-    0000000000           0000                                                                           /____/
-   00       00          00  00
-  00       000000    000      0
-  00     00     00000         0                     - Hostname............: student20.elastic.lan
-   00   00          00        0                     - Disk Space..........: 21% utilized
-    0000             000000000                     ===============================================
-       0             0     0                        - CPU usage...........: 0.75, 0.67 (5, 15 min)
-       00           00    00                        - Memory used.........: 4751 MB / 7855 MB
-        000         0000000                         - Swap in use.........: 0 MB
-          0000000000
-=================================================================================================================
-[student@student20 ~]$ clear
-[student@student20 ~]$ ls
-Desktop    Downloads  NSM-Engineer  Public  Templates
-Documents  Music      Pictures      Temp    Videos
-[student@student20 ~]$ cd NSM-Engineer/
-[student@student20 NSM-Engineer]$ git add .
-[student@student20 NSM-Engineer]$ git status
-# On branch main
-# Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
-#
-#	modified:   Reichardt-notes
-#
-[student@student20 NSM-Engineer]$ touch Stenographer_install
-[student@student20 NSM-Engineer]$ vim Stenographer_install 
-[student@student20 NSM-Engineer]$ git add .
-[student@student20 NSM-Engineer]$ ls
-Day 1 Notes PfSense Configs  Day 5        Notetaking Notes      Troubleshooting
-Day 2 Notes                  Day 6        README.md
-Day 3 Notes                  Day 7        Reichardt-notes
-Day 4                        markdown.md  Stenographer_install
-[student@student20 NSM-Engineer]$ git status
-# On branch main
-# Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
-#
-#	modified:   Reichardt-notes
-#	new file:   Stenographer_install
-#
-[student@student20 NSM-Engineer]$ git commit -m "stenographer"
-[main 9c2f628] stenographer
- Committer: student <student@student20.elastic.lan>
-Your name and email address were configured automatically based
-on your username and hostname. Please check that they are accurate.
-You can suppress this message by setting them explicitly:
-
-    git config --global user.name "Your Name"
-    git config --global user.email you@example.com
-
-After doing this, you may fix the identity used for this commit with:
-
-    git commit --amend --reset-author
-
- 2 files changed, 17 insertions(+), 1 deletion(-)
- create mode 100644 Stenographer_install
-[student@student20 NSM-Engineer]$ git push
-warning: push.default is unset; its implicit value is changing in
-Git 2.0 from 'matching' to 'simple'. To squelch this message
-and maintain the current behavior after the default changes, use:
-
-  git config --global push.default matching
-
-To squelch this message and adopt the new behavior now, use:
-
-  git config --global push.default simple
-
-See 'git help config' and search for 'push.default' for further information.
-(the 'simple' mode was introduced in Git 1.7.11. Use the similar mode
-'current' instead of 'simple' if you sometimes use older versions of Git)
-
-Warning: Permanently added the ECDSA host key for IP address '140.82.113.3' to the list of known hosts.
-Counting objects: 6, done.
-Alpha compression using up to 4 threads.
-Compressing objects: 100% (4/4), done.
-Writing objects: 100% (4/4), 716 bytes | 0 bytes/s, done.
-Total 4 (delta 2), reused 0 (delta 0)
-remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
-To git@github.com:areich204/NSM-Engineer.git
-   c0b5772..9c2f628  main -> main
-[student@student20 NSM-Engineer]$ touch install_suricata
-[student@student20 NSM-Engineer]$ cd /etc/sricata
-bash: cd: /etc/sricata: No such file or directory
-[student@student20 NSM-Engineer]$ cd /etc/suricata
-bash: cd: /etc/suricata: No such file or directory
-[student@student20 NSM-Engineer]$ cd /etc/suricata
-bash: cd: /etc/suricata: No such file or directory
-[student@student20 NSM-Engineer]$ cd /etc/sysconfig/
-[student@student20 sysconfig]$ cd ~
-[student@student20 ~]$ ls
-:w
-
+{
+  Threads: [
+    { PacketsDirectory: /data/stenographer/packets
+    , IndexDirectory: /data/stenographer/index
+    , MaxDirectoryFiles: 30000
+    , DiskFreePercentage: 10
+    }
+  ]
+  , StenotypePath: /usr/bin/stenotype
+  , Interface: em1
+  , Port: 1234
+  , Host: 127.0.0.1
+  , Flags: []
+  , CertPath: /etc/stenographer/certs
+}

@@ -165,7 +165,7 @@ Add a option under ```DNS Forwarder``` to allow RFC 918 rebinding of ```lab-repo
     10. Save and Done
     11. Go to date and time and set ```Region:Etc``` ```City:Coordinated Universal Time``` and turn ```Network Time``` "ON"
     11. Click KDUMP and then disable, click Done
-    12. Click installation destination and select both disks and click done.
+    12. Click installation destination and select both disks check "I would like to make additional space available" click done.
     13. Reclaim space and then delete them all, click Done
     14. Go back to the 2 disks and click I will configure partitioning
     15. Select blue link to partition automatically
